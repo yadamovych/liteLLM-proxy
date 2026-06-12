@@ -15,14 +15,18 @@ RUN pip install --no-cache-dir \
     prisma \
     hypercorn
 
-COPY bedrock_auto_router/ debug_summary_callback/ litellm_config.yaml ./
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Prisma CLI (via prisma-python/nodeenv) needs libatomic + node; generate once at build.
+# Copy package directories without trailing slash so they stay as subfolders under /app.
+# (COPY foo/ ./ flattens contents into /app and types.py would shadow stdlib `types`.)
 RUN PRISMA_DIR="$(python -c 'import os; from litellm.proxy.db import prisma_client as pc; print(os.path.dirname(os.path.dirname(pc.__file__)))')" \
     && cd "${PRISMA_DIR}" \
     && DATABASE_URL="postgresql://litellm:litellm@localhost:5432/litellm" python -m prisma generate
+
+COPY bedrock_auto_router /app/bedrock_auto_router
+COPY debug_summary_callback /app/debug_summary_callback
+COPY litellm_config.yaml /app/
 
 ENV LITELLM_MODE=PRODUCTION \
     PYTHONUNBUFFERED=1
