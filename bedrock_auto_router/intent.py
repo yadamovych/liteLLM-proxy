@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from litellm.router_strategy.complexity_router.config import ComplexityTier
 
-from vscode_context import extract_routing_intent, has_vscode_code_context, strip_vscode_wrapper
+from .vscode import extract_routing_intent, has_vscode_code_context, strip_vscode_wrapper
 
 _SHORT_GREETINGS = frozenset({"test", "ping", "hi", "hello", "hey", "ok", "yes", "no"})
 _CODING_TRIGGERS = (

@@ -39,7 +39,6 @@ services:
       - ./litellm_config.yaml:/app/litellm_config.yaml:ro
       - ./debug_summary_callback:/app/debug_summary_callback:ro
       - ./bedrock_auto_router:/app/bedrock_auto_router:ro
-      - ./vscode_context.py:/app/vscode_context.py:ro
     depends_on:
       postgres:
         condition: service_healthy

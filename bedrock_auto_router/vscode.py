@@ -1,10 +1,8 @@
-"""Shared VS Code / Copilot text handling for bedrock_auto_router and debug_summary_callback."""
+"""VS Code / Copilot prompt parsing for bedrock-auto routing."""
 
 from __future__ import annotations
 
 import re
-
-_COPILOT_MARKERS = ("<context>", "<editorContext>", "<attachments>", "<toolResults>")
 
 _VSCODE_BLOCK_TAGS = (
     "context",
@@ -38,16 +36,7 @@ _PATH_RE = re.compile(
 )
 
 
-def is_copilot_payload(text: str) -> bool:
-    """Return True when text contains VS Code/Copilot XML markers."""
-    if not text:
-        return False
-    lowered = text.lstrip().lower()
-    return any(m.lower() in lowered for m in _COPILOT_MARKERS)
-
-
 def strip_vscode_wrapper(text: str | None) -> str:
-    """Remove VS Code XML wrapper blocks from prompt text."""
     if not text:
         return ""
     cleaned = _STRIP_RE.sub(" ", text)
@@ -56,7 +45,7 @@ def strip_vscode_wrapper(text: str | None) -> str:
 
 
 def extract_routing_intent(text: str | None) -> str:
-    """Extract user intent — never score Copilot XML or system-style boilerplate."""
+    """User words only — never score Copilot XML or system-style boilerplate."""
     if not text:
         return ""
 
@@ -82,11 +71,7 @@ def extract_routing_intent(text: str | None) -> str:
 
 
 def has_vscode_code_context(raw_prompt: str) -> bool:
-    """Non-empty editor selection or fenced code in the user query → needs Sonnet.
-
-    VS Code sends <editorContext> with activeEditor/filePath on every message;
-    that metadata alone must NOT force Sonnet.
-    """
+    """Non-empty editor selection or fenced code in the user query → needs Sonnet."""
     if not raw_prompt:
         return False
 

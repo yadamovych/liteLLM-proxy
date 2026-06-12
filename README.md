@@ -86,7 +86,6 @@ litellm-bedrock/
   docker-compose.yml
   docker/entrypoint.sh           # wait for Postgres, prisma db push, start proxy
   litellm_config.yaml
-  vscode_context.py              # shared VS Code/Copilot text parsing
   bedrock_auto_router/           # VS Code-aware bedrock-auto routing
   debug_summary_callback/        # debug logs + cost footer callback
   scripts/
