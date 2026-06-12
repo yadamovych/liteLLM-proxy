@@ -27,6 +27,7 @@ RUN PRISMA_DIR="$(python -c 'import os; from litellm.proxy.db import prisma_clie
 
 COPY bedrock_auto_router /app/bedrock_auto_router
 COPY debug_summary_callback /app/debug_summary_callback
+COPY custom_callbacks.py /app/
 COPY litellm_config.yaml /app/
 
 ENV LITELLM_MODE=PRODUCTION \

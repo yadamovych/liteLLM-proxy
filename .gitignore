@@ -12,3 +12,11 @@ proxy.log
 crash-steps.log
 bisect-crash.log
 .db_migrated
+AGENTS.md
+custom_callbacks.py
+docker-compose.yml
+Dockerfile
+litellm_config.yaml
+README.md
+.kilo/plans/professional-restructure.md
+docs/cursor.md

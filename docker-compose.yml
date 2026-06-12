@@ -42,6 +42,7 @@ services:
       - ${AWS_CONFIG_DIR:-${HOME}/.aws}:/root/.aws:ro
       - litellm_cache:/app/.litellm_cache
       - ./litellm_config.yaml:/app/litellm_config.yaml:ro
+      - ./custom_callbacks.py:/app/custom_callbacks.py:ro
       - ./debug_summary_callback:/app/debug_summary_callback:ro
       - ./bedrock_auto_router:/app/bedrock_auto_router:ro
     networks:

@@ -101,3 +101,15 @@ litellm-bedrock/
 2. Base URL: `http://localhost:4000`
 3. API Key: virtual key from `./scripts/create-key.sh`
 4. **LiteLLM: Test Connection**
+
+## Cursor IDE
+
+Cursor can use this proxy for **Ask** and **Plan** only (not Agent/Composer). Setup is per-machine in Cursor Settings → Models — see **[docs/cursor.md](docs/cursor.md)**.
+
+Quick reference:
+
+| Setting | Value |
+|---------|-------|
+| Override OpenAI Base URL | `http://localhost:4000/cursor` |
+| OpenAI API Key | virtual key from `./scripts/create-key.sh cursor 30` |
+| Custom model | `qwen3-coder-next` |
