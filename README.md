@@ -47,12 +47,6 @@ aws sso login --profile YOUR_AWS_PROFILE
 docker compose restart litellm
 ```
 
-If Docker cannot resolve `$HOME`, set in `.env`:
-
-```
-AWS_CONFIG_DIR=YOUR_AWS_CONFIG_DIR_PATH
-```
-
 ## Virtual keys
 
 Login to http://localhost:4000/ui with `UI_USERNAME` / `UI_PASSWORD` from `.env`.
