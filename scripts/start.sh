@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-cd "$(dirname "$0")"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${REPO_ROOT}"
 
 DEBUG=0
 if [[ "${1:-}" == "--debug" || "${1:-}" == "-d" ]]; then
@@ -9,7 +10,7 @@ fi
 
 if [[ ! -f .env ]] && [[ -f .env.example ]]; then
   cp .env.example .env
-  echo "Created .env from .env.example"
+  echo "Created .env from .env.example — set LITELLM_MASTER_KEY and UI_PASSWORD before use."
 fi
 
 if [[ "${DEBUG}" == "1" ]]; then
@@ -27,7 +28,7 @@ docker compose up -d --build
 echo ""
 echo "Proxy:  http://localhost:4000"
 echo "UI:     http://localhost:4000/ui"
-echo "Logs:   ./logs.sh"
-echo "Verify: ./verify-proxy.sh"
+echo "Logs:   ./scripts/logs.sh"
+echo "Verify: ./scripts/verify-proxy.sh"
 echo ""
 echo "AWS SSO (host): aws sso login --profile YOUR_AWS_PROFILE"

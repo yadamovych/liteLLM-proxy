@@ -1,6 +1,7 @@
 # Kilo Project Preferences
 
 - Do not delete any files or folders without explicit user approval.
-- Treat `.kilo/plans/debug-summary-callback-refactor.md` as the source of truth for the debug summary callback refactor.
-- For the debug summary callback refactor, the user requested the full multi-file refactoring, no unit tests, Python 3.12+ typing, and a shared `vscode_context.py` module.
-- If future work touches the debug summary callback refactor, preserve the multi-file package structure and existing public API (`proxy_handler_instance`).
+- Operational scripts live in `scripts/` (e.g. `./scripts/start.sh`).
+- Python packages: `bedrock_auto_router/`, `debug_summary_callback/`, shared `vscode_context.py`.
+- For the debug summary callback refactor: full multi-file package structure, no unit tests, Python 3.12+ typing, shared `vscode_context.py` module.
+- Preserve the public LiteLLM callback API: `debug_summary_callback.proxy_handler_instance`.

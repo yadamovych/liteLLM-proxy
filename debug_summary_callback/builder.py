@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .types import RequestSummary, RouteInfo, UsageStats
+from .types import ModelInfo, RequestSummary, RouteInfo, UsageStats
 from .utils import extract_request_summary, normalize_model_name, truncate
 
 
@@ -171,3 +171,14 @@ class DebugLogBuilder:
                 if isinstance(route, dict):
                     return route
         return None
+
+
+def display_model_name(
+    kwargs: dict,
+    payload: dict | None,
+    response_obj: Any,
+) -> str:
+    """Resolve the model name shown in cost footers and debug logs."""
+    builder = DebugLogBuilder()
+    model_info = builder._extract_model_info(kwargs, payload, response_obj)
+    return model_info.get("via") or model_info.get("actual") or "unknown"

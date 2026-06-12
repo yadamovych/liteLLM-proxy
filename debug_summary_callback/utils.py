@@ -5,7 +5,8 @@ from __future__ import annotations
 import re
 from typing import Any
 
-_COPILOT_MARKERS = ("<context>", "<editorContext>", "<attachments>", "<toolResults>")
+from vscode_context import is_copilot_payload
+
 USAGE_KEYS = (
     "prompt_tokens",
     "completion_tokens",
@@ -185,21 +186,6 @@ def role_counts(messages: list) -> str:
             role = str(msg.get("role", "?"))
             counts[role] = counts.get(role, 0) + 1
     return ",".join(f"{r}:{c}" for r, c in counts.items()) if counts else "none"
-
-
-def is_copilot_payload(text: str) -> bool:
-    """Check if text is a VS Code/Copilot payload.
-    
-    Args:
-        text: The text to check
-        
-    Returns:
-        True if text contains Copilot markers
-    """
-    if not text:
-        return False
-    lowered = text.lstrip().lower()
-    return any(m.lower() in lowered for m in _COPILOT_MARKERS)
 
 
 def user_snippet(text: str) -> str | None:

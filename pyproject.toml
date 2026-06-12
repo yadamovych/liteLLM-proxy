@@ -1,0 +1,10 @@
+[project]
+name = "litellm-bedrock"
+version = "0.1.0"
+description = "OpenAI-compatible LiteLLM proxy for AWS Bedrock (VS Code-aware routing)"
+requires-python = ">=3.12"
+readme = "README.md"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100

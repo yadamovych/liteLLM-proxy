@@ -1,6 +1,8 @@
 """Multi-file package for debug summary callback functionality."""
 
-from .builder import DebugLogBuilder
+import bedrock_auto_router  # noqa: F401 — VS Code-aware complexity router patch
+
+from .builder import DebugLogBuilder, display_model_name
 from .cost import build_cost_footer, compute_cost_usd, format_cost, format_token_count
 from .handler import DebugSummaryHandler, proxy_handler_instance
 from .routes import extract_cache_stats, extract_route_metadata
@@ -24,6 +26,7 @@ from .utils import (
 
 __all__ = [
     "DebugLogBuilder",
+    "display_model_name",
     "build_cost_footer",
     "compute_cost_usd",
     "format_cost",

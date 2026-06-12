@@ -12,13 +12,13 @@ OpenAI-compatible proxy for VS Code `litellm-vscode-chat`. Everything runs in **
 
 ```bash
 cd ~/litellm-bedrock
-cp .env.example .env    # first time only
+cp .env.example .env    # first time only — set LITELLM_MASTER_KEY and UI_PASSWORD
 
 aws sso login --profile YOUR_AWS_PROFILE
 
-chmod +x start.sh stop.sh logs.sh verify-proxy.sh create-key.sh
-./start.sh              # build + start
-./start.sh --debug      # verbose per-request logs
+chmod +x scripts/*.sh
+./scripts/start.sh              # build + start
+./scripts/start.sh --debug      # verbose per-request logs
 ```
 
 | URL | Purpose |
@@ -26,17 +26,25 @@ chmod +x start.sh stop.sh logs.sh verify-proxy.sh create-key.sh
 | http://localhost:4000 | OpenAI-compatible API |
 | http://localhost:4000/ui | Admin UI (virtual keys) |
 
-**VS Code:** use a **virtual key** from `./create-key.sh alice 30` or the UI — not the master key.
+**VS Code:** use a **virtual key** from `./scripts/create-key.sh alice 30` or the UI — not the master key.
 
 ## Commands
 
 ```bash
-./start.sh [--debug]   # up -d --build
-./stop.sh              # down (keeps volumes)
-./logs.sh              # follow proxy logs
-./verify-proxy.sh      # health + chat test
-./create-key.sh dev 30 # new virtual key
+./scripts/start.sh [--debug]   # up -d --build
+./scripts/stop.sh              # down (keeps volumes)
+./scripts/logs.sh              # follow proxy logs
+./scripts/verify-proxy.sh      # health + chat test
+./scripts/create-key.sh dev 30 # new virtual key
+./scripts/key-info.sh sk-...   # key budget/spend
 ```
+
+## Secrets
+
+- Copy `.env.example` → `.env` and set unique `LITELLM_MASTER_KEY` and `UI_PASSWORD` before first run.
+- Never commit `.env` or virtual keys printed by `create-key.sh`.
+- AWS credentials stay on the host (`~/.aws` mount); the container does not store AWS keys in the repo.
+- `POSTGRES_PASSWORD` in `.env` is a **local-dev-only** default for the Docker Postgres service.
 
 ## AWS credentials
 
@@ -68,7 +76,7 @@ Master key (`LITELLM_MASTER_KEY`) is for admin/API only.
 
 - **Disk cache** — Docker volume `litellm_cache`
 - **Cost footer** — appended to chat replies (`LITELLM_COST_FOOTER=1`)
-- **Debug logs** — `./start.sh --debug` → `[litellm:debug] model=... tokens=...`
+- **Debug logs** — `./scripts/start.sh --debug` → `[litellm:debug] model=... tokens=...`
 
 ## Layout
 
@@ -76,17 +84,21 @@ Master key (`LITELLM_MASTER_KEY`) is for admin/API only.
 litellm-bedrock/
   Dockerfile
   docker-compose.yml
-  docker/entrypoint.sh      # wait for Postgres, prisma db push, start proxy
+  docker/entrypoint.sh           # wait for Postgres, prisma db push, start proxy
   litellm_config.yaml
-  bedrock_auto_router.py    # VS Code-aware bedrock-auto routing
-  debug_summary_callback.py # debug logs + cost footer
-  start.sh stop.sh logs.sh
-  create-key.sh verify-proxy.sh
+  vscode_context.py              # shared VS Code/Copilot text parsing
+  bedrock_auto_router/           # VS Code-aware bedrock-auto routing
+  debug_summary_callback/        # debug logs + cost footer callback
+  scripts/
+    start.sh stop.sh logs.sh
+    verify-proxy.sh create-key.sh key-info.sh
+  pyproject.toml
+  requirements.txt
 ```
 
 ## VS Code
 
 1. `Ctrl+Shift+P` → **Manage LiteLLM Provider**
 2. Base URL: `http://localhost:4000`
-3. API Key: virtual key from `./create-key.sh`
+3. API Key: virtual key from `./scripts/create-key.sh`
 4. **LiteLLM: Test Connection**

@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: litellm
-      POSTGRES_PASSWORD: litellm
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-litellm}
       POSTGRES_DB: litellm
     volumes:
       - litellm_pg_data:/var/lib/postgresql/data
@@ -25,7 +25,7 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql://litellm:litellm@postgres:5432/litellm
+      DATABASE_URL: postgresql://litellm:${POSTGRES_PASSWORD:-litellm}@postgres:5432/litellm
       AWS_PROFILE: ${AWS_PROFILE}
       AWS_REGION: ${AWS_REGION:-eu-central-1}
       AWS_DEFAULT_REGION: ${AWS_REGION:-eu-central-1}
@@ -37,8 +37,9 @@ services:
       - ${AWS_CONFIG_DIR:-${HOME}/.aws}:/root/.aws:ro
       - litellm_cache:/app/.litellm_cache
       - ./litellm_config.yaml:/app/litellm_config.yaml:ro
-      - ./debug_summary_callback.py:/app/debug_summary_callback.py:ro
-      - ./bedrock_auto_router.py:/app/bedrock_auto_router.py:ro
+      - ./debug_summary_callback:/app/debug_summary_callback:ro
+      - ./bedrock_auto_router:/app/bedrock_auto_router:ro
+      - ./vscode_context.py:/app/vscode_context.py:ro
     depends_on:
       postgres:
         condition: service_healthy

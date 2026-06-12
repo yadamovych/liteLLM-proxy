@@ -1,0 +1,4 @@
+litellm[proxy,caching,extra-proxy]==1.88.1
+boto3
+prisma
+hypercorn

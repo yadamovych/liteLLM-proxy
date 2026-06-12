@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # Show budget and spend for a virtual key.
-# Usage: ./key-info.sh sk-...
+# Usage: ./scripts/key-info.sh sk-...
 set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${REPO_ROOT}"
 
 KEY="${1:-}"
 if [[ -z "${KEY}" ]]; then
@@ -9,7 +12,10 @@ if [[ -z "${KEY}" ]]; then
   exit 1
 fi
 
-if [[ -f .env ]]; then source .env; fi
+if [[ -f .env ]]; then
+  # shellcheck disable=SC1091
+  source .env
+fi
 BASE_URL="${LITELLM_BASE_URL:-http://localhost:4000}"
 
 curl -fsS "${BASE_URL}/key/info" \
@@ -33,5 +39,5 @@ print(f"Remaining : " + (f"${(budget - spend):.4f}" if budget else "unlimited"))
 print(f"Reset at  : {reset_at}")
 print(f"RPM limit : {rpm}")
 print(f"TPM limit : {tpm}")
-print(f"Models    : {', '.join(models) if models else 'all'}")
+print(f"Models    : {", ".join(models) if models else "all"}")
 '

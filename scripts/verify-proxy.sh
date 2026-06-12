@@ -1,14 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd "$(dirname "$0")"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${REPO_ROOT}"
+
 if [[ -f .env ]]; then
   # shellcheck disable=SC1091
   source .env
 fi
 
+if [[ -z "${LITELLM_MASTER_KEY:-}" ]]; then
+  echo "Set LITELLM_MASTER_KEY in .env (copy from .env.example)" >&2
+  exit 1
+fi
+
 BASE_URL="${LITELLM_BASE_URL:-http://localhost:4000}"
-API_KEY="${LITELLM_MASTER_KEY:-sk-local-litellm-bedrock}"
+API_KEY="${LITELLM_MASTER_KEY}"
 
 echo "Checking LiteLLM proxy (Docker) at ${BASE_URL} ..."
 
@@ -66,7 +73,7 @@ _test_chat qwen3-coder
 if curl -fsS -o /dev/null -w "" "${BASE_URL}/ui" 2>/dev/null; then
   echo "OK: Admin UI reachable at ${BASE_URL}/ui"
 else
-  echo "WARN: Admin UI not reachable (is ./start.sh running?)" >&2
+  echo "WARN: Admin UI not reachable (is ./scripts/start.sh running?)" >&2
 fi
 
 cat <<EOF
@@ -75,9 +82,9 @@ Proxy is ready.
 
 VS Code (litellm-vscode-chat):
   Base URL: ${BASE_URL}
-  API Key:  <virtual key from UI or ./create-key.sh dev>
+  API Key:  <virtual key from UI or ./scripts/create-key.sh dev>
   Admin UI: ${BASE_URL}/ui  (master key for key management only)
 
-Create a dev key:  ./create-key.sh alice 30
+Create a dev key:  ./scripts/create-key.sh alice 30
 Command Palette -> 'Manage LiteLLM Provider' or 'LiteLLM: Test Connection'
 EOF

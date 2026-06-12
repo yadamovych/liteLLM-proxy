@@ -1,16 +1,22 @@
 #!/usr/bin/env bash
 # Create a LiteLLM virtual key (proxy must be running in Docker).
-# Usage: ./create-key.sh [user-label] [max_budget_usd]
+# Usage: ./scripts/create-key.sh [user-label] [max_budget_usd]
 set -euo pipefail
-cd "$(dirname "$0")"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${REPO_ROOT}"
 
 if [[ -f .env ]]; then
   # shellcheck disable=SC1091
   source .env
 fi
 
+if [[ -z "${LITELLM_MASTER_KEY:-}" ]]; then
+  echo "Set LITELLM_MASTER_KEY in .env (copy from .env.example)" >&2
+  exit 1
+fi
+
 BASE_URL="${LITELLM_BASE_URL:-http://localhost:4000}"
-MASTER_KEY="${LITELLM_MASTER_KEY:-sk-local-litellm-bedrock}"
+MASTER_KEY="${LITELLM_MASTER_KEY}"
 USER_LABEL="${1:-dev}"
 MAX_BUDGET="${2:-30}"
 
