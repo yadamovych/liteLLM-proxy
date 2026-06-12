@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, AsyncGenerator
+from typing import Any
 
 from litellm.types.utils import Delta, ModelResponseStream, StreamingChoices
 
@@ -11,10 +11,7 @@ from .utils import merge_usage, normalize_model_name
 
 
 class StreamMetadataAccumulator:
-    """Accumulates metadata from streaming chunks."""
-    
     def __init__(self) -> None:
-        """Initialize the accumulator."""
         self.id: str | None = None
         self.created: int | None = None
         self.model: str | None = None
@@ -22,11 +19,6 @@ class StreamMetadataAccumulator:
         self._usage_stack: list[dict[str, int]] = []
     
     def update_from_chunk(self, chunk: Any) -> None:
-        """Update metadata from a streaming chunk.
-        
-        Args:
-            chunk: The streaming chunk (dict or object)
-        """
         chunk_dict = self._chunk_as_dict(chunk)
         
         if chunk_dict.get("id"):
@@ -45,22 +37,12 @@ class StreamMetadataAccumulator:
             self._usage_stack.append(usage)
     
     def get_final_usage(self) -> dict[str, int]:
-        """Get accumulated usage stats from all chunks.
-        
-        Returns:
-            Merged usage dict with max values
-        """
         if not self._usage_stack:
             return {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0,
                     "cache_read_input_tokens": 0, "cache_creation_input_tokens": 0}
         return merge_usage(*self._usage_stack)
     
     def get_meta(self) -> dict[str, Any]:
-        """Get accumulated stream metadata.
-        
-        Returns:
-            Dict with id, created, model
-        """
         return {
             "id": self.id,
             "created": self.created,
@@ -68,27 +50,11 @@ class StreamMetadataAccumulator:
         }
     
     def _chunk_as_dict(self, chunk: Any) -> dict[str, Any]:
-        """Normalize a chunk to a dict.
-        
-        Args:
-            chunk: The chunk object
-            
-        Returns:
-            Dict representation of the chunk
-        """
         if isinstance(chunk, dict):
             return chunk
         return chunk.model_dump() if hasattr(chunk, "model_dump") else {}
 
     def _choice_dict(self, chunk_dict: dict[str, Any]) -> dict[str, Any]:
-        """Extract the first choice from a chunk.
-        
-        Args:
-            chunk_dict: The chunk as dict
-            
-        Returns:
-            Choice dict, or empty dict if no choices
-        """
         choices = chunk_dict.get("choices") or []
         if not choices:
             return {}
@@ -98,14 +64,6 @@ class StreamMetadataAccumulator:
         return choice.model_dump() if hasattr(choice, "model_dump") else {}
 
     def _usage_dict_from_chunk(self, chunk_dict: dict[str, Any]) -> dict[str, int]:
-        """Extract usage from a chunk.
-        
-        Args:
-            chunk_dict: The chunk as dict
-            
-        Returns:
-            Usage dict, or empty dict if no usage
-        """
         usage = chunk_dict.get("usage")
         if usage is None:
             return {}
@@ -116,16 +74,8 @@ class StreamMetadataAccumulator:
 
 
 async def accumulate_stream_usage(
-    response: AsyncGenerator[Any, None],
+    response: Any,
 ) -> tuple[dict[str, int], dict[str, Any]]:
-    """Consume a stream and accumulate usage stats and metadata.
-    
-    Args:
-        response: The async generator of chunks
-        
-    Returns:
-        Tuple of (usage_stats, stream_metadata)
-    """
     accumulator = StreamMetadataAccumulator()
     
     chunks = []
@@ -140,22 +90,11 @@ async def accumulate_stream_usage(
 
 
 async def inject_footer_into_stream(
-    response: AsyncGenerator[Any, None],
+    response: Any,
     request_data: dict,
     payload: dict | None,
     proxy_hit: bool = False,
-) -> AsyncGenerator[Any, None]:
-    """Inject a cost footer into a streaming response.
-    
-    Args:
-        response: The async generator of chunks
-        request_data: Request data dict
-        payload: Standard logging object payload
-        proxy_hit: Whether this was a proxy cache hit
-        
-    Yields:
-        Original chunks, followed by footer chunk if appropriate
-    """
+) -> Any:
     accumulator = StreamMetadataAccumulator()
     
     async for chunk in response:

@@ -6,17 +6,6 @@ from typing import Any
 
 
 def extract_route_metadata(kwargs: dict, payload: dict | None) -> dict[str, Any] | None:
-    """Extract route metadata from request.
-    
-    Searches multiple metadata sources for bedrock_auto_route info.
-    
-    Args:
-        kwargs: The original request kwargs
-        payload: The standard logging object payload
-        
-    Returns:
-        Route metadata dict if found, None otherwise
-    """
     for source in (
         kwargs.get("litellm_metadata"),
         kwargs.get("metadata"),
@@ -38,17 +27,6 @@ def extract_cache_stats(
     cache_requested: bool,
     saved_cache_cost: float = 0.0,
 ) -> dict[str, Any]:
-    """Build cache-related log fields.
-    
-    Args:
-        usage: Token usage statistics
-        proxy_hit: Whether this was a proxy cache hit
-        cache_requested: Whether cache control was requested
-        saved_cache_cost: Dollar amount saved by cache hit
-        
-    Returns:
-        Dict with cache stats for logging
-    """
     cache_read = usage.get("cache_read_input_tokens", 0)
     cache_write = usage.get("cache_creation_input_tokens", 0)
     prompt_tokens = usage.get("prompt_tokens", 0)

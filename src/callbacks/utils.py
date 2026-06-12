@@ -6,6 +6,7 @@ import re
 from typing import Any
 
 _COPILOT_MARKERS = ("<context>", "<editorContext>", "<attachments>", "<toolResults>")
+_COPILOT_PATTERN = re.compile(r"|".join(re.escape(m) for m in _COPILOT_MARKERS), re.IGNORECASE)
 USAGE_KEYS = (
     "prompt_tokens",
     "completion_tokens",
@@ -16,30 +17,59 @@ USAGE_KEYS = (
 _SQUEEZE_WS = re.compile(r"\s+")
 
 
-def truncate(text: str, limit: int = 72) -> str:
-    """Truncate text to a maximum length, squeezing whitespace.
+def is_copilot_payload(text: str) -> bool:
+    """Check if text appears to be a VS Code/Copilot payload based on markers.
     
     Args:
-        text: The text to truncate
-        limit: Maximum length including ellipsis
+        text: The text content to check
         
     Returns:
-        Truncated text with "..." appended if needed
+        True if the text contains Copilot XML markers, False otherwise
     """
+    if not text:
+        return False
+    lowered = text.lstrip().lower()
+    return any(m.lower() in lowered for m in _COPILOT_MARKERS)
+
+
+def has_vscode_code_context(text: str) -> bool:
+    """Check if text contains VS Code code context markers.
+    
+    Args:
+        text: The text content to check
+        
+    Returns:
+        True if the text contains VS Code context markers, False otherwise
+    """
+    if not text:
+        return False
+    return bool(_COPILOT_PATTERN.search(text))
+
+
+def strip_copilot_markers(text: str) -> str:
+    """Remove Copilot XML markers from text.
+    
+    Args:
+        text: The text to clean
+        
+    Returns:
+        Text with Copilot markers removed
+    """
+    if not text or not is_copilot_payload(text):
+        return text
+    lowered = text.lstrip().lower()
+    result = text
+    for marker in _COPILOT_MARKERS:
+        result = result.replace(marker, "")
+    return result.strip()
+
+
+def truncate(text: str, limit: int = 72) -> str:
     text = _SQUEEZE_WS.sub(" ", text).strip()
     return text if len(text) <= limit else text[: limit - 3] + "..."
 
 
 def extract_int_field(obj: Any, *names: str) -> int:
-    """Extract an integer field from an object or dict.
-    
-    Args:
-        obj: The object or dict to extract from
-        *names: Field names to try in order
-        
-    Returns:
-        The integer value, or 0 if not found
-    """
     for name in names:
         if obj is None:
             continue
@@ -50,14 +80,6 @@ def extract_int_field(obj: Any, *names: str) -> int:
 
 
 def extract_usage_from_object(usage: Any) -> dict[str, int]:
-    """Extract usage stats from various object types.
-    
-    Args:
-        usage: The usage object (dict, object with model_dump, or None)
-        
-    Returns:
-        Dict with usage statistics
-    """
     if usage is None:
         return {}
 
@@ -91,14 +113,6 @@ def extract_usage_from_object(usage: Any) -> dict[str, int]:
 
 
 def merge_usage(*sources: dict[str, int]) -> dict[str, int]:
-    """Merge multiple usage dicts, taking the max for each key.
-    
-    Args:
-        *sources: Multiple usage dicts to merge
-        
-    Returns:
-        Merged dict with max values for each usage key
-    """
     merged: dict[str, int] = {k: 0 for k in USAGE_KEYS}
     for src in sources:
         for key in USAGE_KEYS:
@@ -107,19 +121,6 @@ def merge_usage(*sources: dict[str, int]) -> dict[str, int]:
 
 
 def extract_usage(kwargs: dict, payload: dict | None, response_obj: Any) -> dict[str, int]:
-    """Extract usage statistics from request/response.
-    
-    Searches multiple sources and returns max values for each metric to
-    handle partial data.
-    
-    Args:
-        kwargs: The original request kwargs
-        payload: The standard logging object payload
-        response_obj: The response object
-        
-    Returns:
-        Dict with usage statistics
-    """
     sources: list[dict[str, int]] = []
 
     if payload:
@@ -142,16 +143,6 @@ def extract_usage(kwargs: dict, payload: dict | None, response_obj: Any) -> dict
 
 
 def message_text(content: Any) -> str:
-    """Extract text content from a message.
-    
-    Handles string, dict, list of dicts, andNone.
-    
-    Args:
-        content: The message content
-        
-    Returns:
-        Extracted text as a single string
-    """
     if isinstance(content, str):
         return content
     if content is None:
@@ -171,14 +162,6 @@ def message_text(content: Any) -> str:
 
 
 def role_counts(messages: list) -> str:
-    """Count messages by role.
-    
-    Args:
-        messages: List of message dicts
-        
-    Returns:
-        Comma-separated "role:count" strings
-    """
     counts: dict[str, int] = {}
     for msg in messages:
         if isinstance(msg, dict):
@@ -187,30 +170,7 @@ def role_counts(messages: list) -> str:
     return ",".join(f"{r}:{c}" for r, c in counts.items()) if counts else "none"
 
 
-def is_copilot_payload(text: str) -> bool:
-    """Check if text is a VS Code/Copilot payload.
-    
-    Args:
-        text: The text to check
-        
-    Returns:
-        True if text contains Copilot markers
-    """
-    if not text:
-        return False
-    lowered = text.lstrip().lower()
-    return any(m.lower() in lowered for m in _COPILOT_MARKERS)
-
-
 def user_snippet(text: str) -> str | None:
-    """Extract a user message snippet, excluding Copilot payloads.
-    
-    Args:
-        text: The raw user message text
-        
-    Returns:
-        Truncated snippet, or None if Copilot payload or empty
-    """
     text = text.strip()
     if not text or is_copilot_payload(text):
         return None
@@ -218,15 +178,6 @@ def user_snippet(text: str) -> str | None:
 
 
 def extract_request_summary(kwargs: dict, payload: dict | None) -> dict[str, Any]:
-    """Extract a summary of the request for logging.
-    
-    Args:
-        kwargs: The original request kwargs
-        payload: The standard logging object payload
-        
-    Returns:
-        Dict with request summary info (msgs, roles, last, source)
-    """
     messages = kwargs.get("messages") or (payload or {}).get("messages")
 
     if isinstance(messages, str):
@@ -248,16 +199,6 @@ def extract_request_summary(kwargs: dict, payload: dict | None) -> dict[str, Any
 
 
 def normalize_model_name(model: str) -> str:
-    """Normalize a model name to its canonical form.
-    
-    Handles Bedrock ARN prefixes, model aliases, and known patterns.
-    
-    Args:
-        model: The raw model name
-        
-    Returns:
-        The normalized model name
-    """
     if not model:
         return "unknown"
     
@@ -289,14 +230,6 @@ def normalize_model_name(model: str) -> str:
 
 
 def strip_existing_footer(content: Any) -> Any:
-    """Remove an existing cost footer from message content.
-    
-    Args:
-        content: The message content (str or list)
-        
-    Returns:
-        Content with footer removed if present
-    """
     if isinstance(content, str):
         match = re.search(r"\n\n---\n\*\$[^\*]+\*$", content)
         if match:
@@ -316,15 +249,6 @@ def strip_existing_footer(content: Any) -> Any:
 
 
 def append_footer_to_message_content(content: Any, footer: str) -> Any:
-    """Append a cost footer to message content.
-    
-    Args:
-        content: The message content (str or list)
-        footer: The footer string to append
-        
-    Returns:
-        Content with footer appended
-    """
     if isinstance(content, str):
         return content + footer
     if isinstance(content, list):

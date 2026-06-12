@@ -21,39 +21,14 @@ class DebugLogBuilder:
         cost_footer_enabled: bool = True,
         max_log_intent: int = 48,
     ) -> None:
-        """Initialize the builder.
-        
-        Args:
-            debug_enabled: Whether debug logging is enabled
-            cost_footer_enabled: Whether to include cost footer in responses
-            max_log_intent: Maximum length for logged intent strings
-        """
         self.debug_enabled = debug_enabled
         self.cost_footer_enabled = cost_footer_enabled
         self.max_log_intent = max_log_intent
 
     def extract_request_info(self, kwargs: dict, payload: dict | None) -> RequestSummary:
-        """Extract request summary from kwargs and payload.
-        
-        Args:
-            kwargs: The original request kwargs
-            payload: The standard logging object payload
-            
-        Returns:
-            RequestSummary dict with message count, roles, and last user message
-        """
         return extract_request_summary(kwargs, payload)
 
     def extract_route_info(self, kwargs: dict, payload: dict | None) -> RouteInfo | None:
-        """Extract route metadata from request.
-        
-        Args:
-            kwargs: The original request kwargs
-            payload: The standard logging object payload
-            
-        Returns:
-            RouteInfo if route metadata exists, None otherwise
-        """
         route = self._extract_route_raw(kwargs, payload)
         if not route:
             return None
@@ -74,19 +49,6 @@ class DebugLogBuilder:
         duration_ms: int,
         route_info: RouteInfo | None,
     ) -> dict[str, Any]:
-        """Build a complete debug log entry.
-        
-        Args:
-            kwargs: The original request kwargs
-            response_obj: The response object
-            payload: The standard logging object payload
-            usage: Extracted usage statistics
-            duration_ms: Request duration in milliseconds
-            route_info: Extracted route metadata
-            
-        Returns:
-            Dict with all fields for the debug log entry
-        """
         model_info = self._extract_model_info(kwargs, payload, response_obj)
         
         log_parts: dict[str, Any] = {
@@ -118,16 +80,6 @@ class DebugLogBuilder:
         payload: dict | None,
         response_obj: Any,
     ) -> ModelInfo:
-        """Extract model name and routing info.
-        
-        Args:
-            kwargs: The original request kwargs
-            payload: The standard logging object payload
-            response_obj: The response object
-            
-        Returns:
-            ModelInfo dict with actual model name and optional routing path
-        """
         via: str | None = None
         if payload and payload.get("model_group"):
             via = normalize_model_name(str(payload["model_group"]))
@@ -150,15 +102,6 @@ class DebugLogBuilder:
         return ModelInfo(actual=actual, via=via)
 
     def _extract_route_raw(self, kwargs: dict, payload: dict | None) -> dict[str, Any] | None:
-        """Extract raw route metadata dict.
-        
-        Args:
-            kwargs: The original request kwargs
-            payload: The standard logging object payload
-            
-        Returns:
-            Route metadata dict if found, None otherwise
-        """
         for source in (
             kwargs.get("litellm_metadata"),
             kwargs.get("metadata"),

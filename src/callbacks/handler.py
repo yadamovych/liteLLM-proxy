@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from typing import Any, AsyncGenerator
+from typing import Any
 
 from litellm.integrations.custom_logger import CustomLogger
 from litellm.types.utils import Delta, ModelResponseStream, StreamingChoices
@@ -30,7 +30,6 @@ from .utils import (
 
 
 def _debug_enabled() -> bool:
-    """Check if debug logging is enabled via environment variables."""
     import os
     if os.environ.get("LITELLM_LOG", "").upper() in {"DEBUG", "TRACE"}:
         return True
@@ -38,21 +37,12 @@ def _debug_enabled() -> bool:
 
 
 def _cost_footer_enabled() -> bool:
-    """Check if cost footer is enabled via environment variables."""
     import os
     return os.environ.get("LITELLM_COST_FOOTER", "1").lower() in {"1", "true", "yes", "on"}
 
 
 class DebugSummaryHandler(CustomLogger):
-    """Handler for debug logging and cost footer injection for LiteLLM proxy.
-
-    This class consumes LiteLLM callbacks and emits debug logs to stdout
-    or stderr. It also optionally appends cost footers to response messages
-    in the format "$0.0012 · claude-3-5-sonnet · 1,234 in · 567 out".
-    """
-
     def __init__(self) -> None:
-        """Initialize the handler with configuration from environment."""
         self.debug_enabled = _debug_enabled()
         self.cost_footer_enabled = _cost_footer_enabled()
         self._builder = DebugLogBuilder(
@@ -67,17 +57,6 @@ class DebugSummaryHandler(CustomLogger):
         start_time: float,
         end_time: float,
     ) -> None:
-        """Log a successful request.
-        
-        Called synchronously by LiteLLM on successful request completion.
-        Emits a debug log with model, usage, timing, and route metadata.
-        
-        Args:
-            kwargs: The original request kwargs
-            response_obj: The response object from LiteLLM
-            start_time: Timestamp when request started
-            end_time: Timestamp when request completed
-        """
         if not self.debug_enabled:
             return
 
@@ -140,10 +119,6 @@ class DebugSummaryHandler(CustomLogger):
         start_time: float,
         end_time: float,
     ) -> None:
-        """Async version of log_success_event.
-        
-        Forward-compatible for async logging infrastructure.
-        """
         self.log_success_event(kwargs, response_obj, start_time, end_time)
 
     def log_failure_event(
@@ -153,17 +128,6 @@ class DebugSummaryHandler(CustomLogger):
         start_time: float,
         end_time: float,
     ) -> None:
-        """Log a failed request.
-        
-        Emits an error log with model name, error message, and
-        request summary for debugging.
-        
-        Args:
-            kwargs: The original request kwargs
-            response_obj: The error response object
-            start_time: Timestamp when request started
-            end_time: Timestamp when request completed
-        """
         if not self.debug_enabled:
             return
 
@@ -189,7 +153,6 @@ class DebugSummaryHandler(CustomLogger):
         start_time: float,
         end_time: float,
     ) -> None:
-        """Async version of log_failure_event."""
         self.log_failure_event(kwargs, response_obj, start_time, end_time)
 
     async def async_post_call_success_hook(
@@ -198,19 +161,6 @@ class DebugSummaryHandler(CustomLogger):
         user_api_key_dict: Any,
         response: Any,
     ) -> Any:
-        """Post-call hook for non-streaming responses.
-        
-        Adds a cost footer to the response message content if enabled
-        and usage data is available.
-        
-        Args:
-            data: Request data dict
-            user_api_key_dict: API key info (unused)
-            response: The response object to modify
-            
-        Returns:
-            The modified response object
-        """
         if not self.cost_footer_enabled:
             return response
 
@@ -248,21 +198,9 @@ class DebugSummaryHandler(CustomLogger):
     async def async_post_call_streaming_iterator_hook(
         self,
         user_api_key_dict: Any,
-        response: AsyncGenerator[Any, None],
+        response: Any,
         request_data: dict,
-    ) -> AsyncGenerator[Any, None]:
-        """Post-call hook for streaming responses.
-        
-        Adds a cost footer chunk at the end of the stream if enabled.
-        
-        Args:
-            user_api_key_dict: API key info (unused)
-            response: The async generator of chunks
-            request_data: Request data dict
-            
-        Yields:
-            Original chunks followed by footer chunk if appropriate
-        """
+    ) -> Any:
         if not self.cost_footer_enabled:
             async for chunk in response:
                 yield chunk
@@ -286,15 +224,6 @@ class DebugSummaryHandler(CustomLogger):
         kwargs: dict,
         payload: dict | None,
     ) -> bool:
-        """Check if request has cache control enabled.
-        
-        Args:
-            kwargs: The original request kwargs
-            payload: The standard logging object payload
-            
-        Returns:
-            True if cache control is requested
-        """
         messages = kwargs.get("messages") or (payload or {}).get("messages")
         if not isinstance(messages, list):
             return False
@@ -316,42 +245,17 @@ class DebugSummaryHandler(CustomLogger):
         *,
         stream_model: str | None = None,
     ) -> str:
-        """Get the normalized model name for display.
-        
-        Args:
-            kwargs: The original request kwargs
-            payload: The standard logging object payload
-            stream_model: Optional stream model name for streaming
-            
-        Returns:
-            The normalized model name for display
-        """
         response_stub: dict[str, Any] = {"model": stream_model} if stream_model else {}
         model_info = self._builder._extract_model_info(kwargs, payload, response_stub)
         return model_info.get("via") or model_info.get("actual") or "unknown"
 
     def _emit(self, level: str, parts: dict[str, Any]) -> None:
-        """Emit a log entry.
-        
-        Args:
-            level: Log level ("debug" or "error")
-            parts: Dict of key-value pairs to log
-        """
         import sys
         body = " ".join(self._format_field(k, v) for k, v in parts.items())
         stream = sys.stderr if level == "error" else sys.stdout
         print(f"[litellm:{level}] {body}", file=stream, flush=True)
 
     def _format_field(self, key: str, value: Any) -> str:
-        """Format a single log field.
-        
-        Args:
-            key: The field name
-            value: The field value
-            
-        Returns:
-            Formatted string like "key=value"
-        """
         if isinstance(value, bool):
             return f"{key}={str(value).lower()}"
         if isinstance(value, (int, float)):

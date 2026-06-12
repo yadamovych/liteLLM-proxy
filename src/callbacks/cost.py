@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from .utils import normalize_model_name
 
@@ -14,22 +14,7 @@ def compute_cost_usd(
     kwargs: dict | None = None,
     payload: dict | None = None,
     proxy_hit: bool = False,
-) -> Optional[float]:
-    """Compute cost in USD for a request.
-    
-    Attempts to get cost from litellm logging object first, then falls back
-    to litellm's completion_cost calculation.
-    
-    Args:
-        usage: Token usage statistics
-        request_data: Request data dict
-        kwargs: Original request kwargs
-        payload: Standard logging object payload
-        proxy_hit: Whether this was a proxy cache hit
-        
-    Returns:
-        Cost in USD if calculable, None otherwise
-    """
+) -> float | None:
     if proxy_hit:
         return 0.0
 
@@ -66,15 +51,7 @@ def compute_cost_usd(
     return None
 
 
-def format_cost(cost: Optional[float]) -> str:
-    """Format a cost value as a USD string.
-    
-    Args:
-        cost: Cost in USD, or None
-        
-    Returns:
-        Formatted string like "$0.0012" or "n/a"
-    """
+def format_cost(cost: float | None) -> str:
     if cost is None:
         return "n/a"
     if cost == 0:
@@ -83,14 +60,6 @@ def format_cost(cost: Optional[float]) -> str:
 
 
 def format_token_count(value: int) -> str:
-    """Format a token count with comma separators.
-    
-    Args:
-        value: Number of tokens
-        
-    Returns:
-        Formatted string like "1,234"
-    """
     return f"{value:,}"
 
 
@@ -98,20 +67,9 @@ def build_cost_footer(
     *,
     usage: dict[str, int],
     model_name: str,
-    cost_usd: Optional[float],
+    cost_usd: float | None,
     proxy_hit: bool = False,
 ) -> str:
-    """Build the cost footer string for response messages.
-    
-    Args:
-        usage: Token usage statistics
-        model_name: The normalized model name
-        cost_usd: Cost in USD
-        proxy_hit: Whether this was a proxy cache hit
-        
-    Returns:
-        Formatted footer string
-    """
     prompt_tokens = usage.get("prompt_tokens", 0)
     completion_tokens = usage.get("completion_tokens", 0)
     cache_read = usage.get("cache_read_input_tokens", 0)

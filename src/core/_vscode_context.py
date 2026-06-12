@@ -1,4 +1,8 @@
-"""Shared VS Code detection logic for bedrock_auto_router and debug_summary_callback."""
+"""Shared VS Code detection logic.
+
+This is a private module (leading underscore) that provides
+VS Code/Copilot detection utilities shared across modules.
+"""
 
 from __future__ import annotations
 

@@ -6,7 +6,6 @@ from typing import TypedDict
 
 
 class RouteInfo(TypedDict):
-    """Type for route metadata from bedrock_auto_router."""
     tier: str
     score: float | None
     stripped_chars: int | None
@@ -15,7 +14,6 @@ class RouteInfo(TypedDict):
 
 
 class UsageStats(TypedDict):
-    """Type for token usage statistics."""
     prompt_tokens: int
     completion_tokens: int
     total_tokens: int
@@ -24,13 +22,11 @@ class UsageStats(TypedDict):
 
 
 class ModelInfo(TypedDict):
-    """Type for model identification."""
     actual: str
     via: str | None
 
 
 class RequestSummary(TypedDict):
-    """Type for request summary information."""
     msgs: int | None
     roles: str | None
     last: str | None
