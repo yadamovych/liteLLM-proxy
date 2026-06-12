@@ -9,6 +9,8 @@ services:
       POSTGRES_DB: litellm
     volumes:
       - litellm_pg_data:/var/lib/postgresql/data
+    networks:
+      - litellm-net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U litellm -d litellm"]
       interval: 5s
@@ -26,6 +28,9 @@ services:
       - .env
     environment:
       DATABASE_URL: postgresql://litellm:${POSTGRES_PASSWORD:-litellm}@postgres:5432/litellm
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: litellm
+      POSTGRES_DB: litellm
       AWS_PROFILE: ${AWS_PROFILE}
       AWS_REGION: ${AWS_REGION:-eu-central-1}
       AWS_DEFAULT_REGION: ${AWS_REGION:-eu-central-1}
@@ -39,6 +44,8 @@ services:
       - ./litellm_config.yaml:/app/litellm_config.yaml:ro
       - ./debug_summary_callback:/app/debug_summary_callback:ro
       - ./bedrock_auto_router:/app/bedrock_auto_router:ro
+    networks:
+      - litellm-net
     depends_on:
       postgres:
         condition: service_healthy
@@ -48,6 +55,10 @@ services:
       timeout: 10s
       retries: 5
       start_period: 45s
+
+networks:
+  litellm-net:
+    driver: bridge
 
 volumes:
   litellm_pg_data:

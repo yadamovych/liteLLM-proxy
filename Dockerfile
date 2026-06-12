@@ -5,6 +5,7 @@ RUN apt-get update \
         curl ca-certificates openssl \
         libatomic1 \
         nodejs npm \
+        postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
