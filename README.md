@@ -5,7 +5,7 @@ OpenAI-compatible proxy for VS Code `litellm-vscode-chat`. Everything runs in **
 ## Prerequisites
 
 - **Docker** in WSL
-- **AWS CLI** on the host with profile `aws.it.saas.test2-ia` (`~/.aws/config`)
+- **AWS CLI** on the host with configured profile (`~/.aws/config`)
 - `curl` for verify/create-key scripts
 
 ## Quick start
@@ -14,7 +14,7 @@ OpenAI-compatible proxy for VS Code `litellm-vscode-chat`. Everything runs in **
 cd ~/litellm-bedrock
 cp .env.example .env    # first time only
 
-aws sso login --profile aws.it.saas.test2-ia
+aws sso login --profile YOUR_AWS_PROFILE
 
 chmod +x start.sh stop.sh logs.sh verify-proxy.sh create-key.sh
 ./start.sh              # build + start
@@ -43,14 +43,14 @@ chmod +x start.sh stop.sh logs.sh verify-proxy.sh create-key.sh
 The container mounts **`~/.aws`** read-only. Refresh SSO on the host when tokens expire:
 
 ```bash
-aws sso login --profile aws.it.saas.test2-ia
+aws sso login --profile YOUR_AWS_PROFILE
 docker compose restart litellm
 ```
 
 If Docker cannot resolve `$HOME`, set in `.env`:
 
 ```
-AWS_CONFIG_DIR=/home/yurii/.aws
+AWS_CONFIG_DIR=YOUR_AWS_CONFIG_DIR_PATH
 ```
 
 ## Virtual keys
