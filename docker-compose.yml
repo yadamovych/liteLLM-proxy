@@ -1,0 +1,54 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: litellm-bedrock-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: litellm
+      POSTGRES_PASSWORD: litellm
+      POSTGRES_DB: litellm
+    volumes:
+      - litellm_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U litellm -d litellm"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  litellm:
+    build: .
+    container_name: litellm-bedrock-proxy
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://litellm:litellm@postgres:5432/litellm
+      AWS_PROFILE: ${AWS_PROFILE:-aws.it.saas.test2-ia}
+      AWS_REGION: ${AWS_REGION:-eu-central-1}
+      AWS_DEFAULT_REGION: ${AWS_REGION:-eu-central-1}
+      LITELLM_MODE: PRODUCTION
+      LITELLM_LOG: ${LITELLM_LOG:-WARNING}
+      LITELLM_DEBUG: ${LITELLM_DEBUG:-}
+      LITELLM_COST_FOOTER: ${LITELLM_COST_FOOTER:-1}
+    volumes:
+      - ${AWS_CONFIG_DIR:-${HOME}/.aws}:/root/.aws:ro
+      - litellm_cache:/app/.litellm_cache
+      - ./litellm_config.yaml:/app/litellm_config.yaml:ro
+      - ./debug_summary_callback.py:/app/debug_summary_callback.py:ro
+      - ./bedrock_auto_router.py:/app/bedrock_auto_router.py:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:4000/health/liveliness"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+
+volumes:
+  litellm_pg_data:
+  litellm_cache:

@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.git/
+.env
+.litellm_cache/
+proxy.log
+crash-steps.log
+bisect-crash.log
+.db_migrated

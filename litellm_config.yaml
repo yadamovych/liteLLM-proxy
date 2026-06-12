@@ -1,0 +1,107 @@
+model_list:
+  # Primary coding model
+  - model_name: claude-sonnet-4.6
+    litellm_params:
+      model: bedrock/eu.anthropic.claude-sonnet-4-6
+      aws_profile_name: aws.it.saas.test2-ia
+      aws_region_name: eu-central-1
+    model_info:
+      supports_prompt_caching: true
+      max_input_tokens: 200000
+      max_output_tokens: 64000
+
+  - model_name: claude-haiku-4.5
+    litellm_params:
+      model: bedrock/eu.anthropic.claude-haiku-4-5-20251001-v1:0
+      aws_profile_name: aws.it.saas.test2-ia
+      aws_region_name: eu-central-1
+    model_info:
+      supports_prompt_caching: true
+      max_input_tokens: 200000
+      max_output_tokens: 16000
+
+  # Optional extras (enable if model access is granted)
+  - model_name: nova-lite
+    litellm_params:
+      model: bedrock/eu.amazon.nova-lite-v1:0
+      aws_profile_name: aws.it.saas.test2-ia
+      aws_region_name: eu-central-1
+    model_info:
+      max_input_tokens: 300000
+      max_output_tokens: 5120
+
+  - model_name: qwen3-coder-next
+    litellm_params:
+      model: bedrock/qwen.qwen3-coder-next
+      aws_profile_name: aws.it.saas.test2-ia
+      aws_region_name: eu-west-2
+    model_info:
+      max_input_tokens: 262144
+      max_output_tokens: 16384
+
+  - model_name: qwen3-coder-30b-a3b
+    litellm_params:
+      # eu-central-1: use coder-next (30b-a3b is not offered in this region)
+      model: bedrock/qwen.qwen3-coder-30b-a3b-v1:0
+      aws_profile_name: aws.it.saas.test2-ia
+      aws_region_name: eu-central-1
+    model_info:
+      max_input_tokens: 262144
+      max_output_tokens: 8192
+
+  # Auto routing: https://docs.litellm.ai/docs/proxy/auto_routing (complexity router)
+  - model_name: bedrock-auto
+    litellm_params:
+      model: auto_router/complexity_router
+      complexity_router_default_model: claude-haiku-4.5
+      complexity_router_config:
+        tiers:
+          SIMPLE: claude-haiku-4.5
+          MEDIUM: claude-haiku-4.5
+          COMPLEX: claude-sonnet-4.6
+          REASONING: claude-sonnet-4.6
+        default_model: claude-haiku-4.5
+        tier_boundaries:
+          simple_medium: 0.20
+          medium_complex: 0.30
+          complex_reasoning: 0.65
+        token_thresholds:
+          simple: 20
+          complex: 500
+        dimension_weights:
+          tokenCount: 0.08
+          codePresence: 0.40
+          reasoningMarkers: 0.22
+          technicalTerms: 0.18
+          simpleIndicators: 0.08
+          multiStepPatterns: 0.02
+          questionComplexity: 0.02
+    model_info:
+      supports_prompt_caching: true
+
+router_settings:
+  routing_strategy: simple-shuffle
+
+litellm_settings:
+  set_verbose: false
+  default_key_generate_params:
+    models:
+      - bedrock-auto
+      - claude-haiku
+      - claude-sonnet
+      - qwen3-coder
+    max_budget: 30
+    budget_duration: 30d
+  cache: true
+  cache_params:
+    type: disk
+    disk_cache_dir: /app/.litellm_cache
+    ttl: 3600
+    supported_call_types:
+      - completion
+      - acompletion
+  callbacks: ["debug_summary_callback.proxy_handler_instance"]
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL
