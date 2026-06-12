@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir \
     prisma \
     hypercorn
 
-COPY bedrock_auto_router.py debug_summary_callback.py litellm_config.yaml ./
+COPY bedrock_auto_router.py debug_summary_callback/ litellm_config.yaml ./
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
