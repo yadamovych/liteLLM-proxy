@@ -37,8 +37,6 @@ services:
       - ${AWS_CONFIG_DIR:-${HOME}/.aws}:/root/.aws:ro
       - litellm_cache:/app/.litellm_cache
       - ./litellm_config.yaml:/app/litellm_config.yaml:ro
-      - ./debug_summary_callback.py:/app/debug_summary_callback.py:ro
-      - ./bedrock_auto_router.py:/app/bedrock_auto_router.py:ro
     depends_on:
       postgres:
         condition: service_healthy
