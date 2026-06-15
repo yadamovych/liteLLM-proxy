@@ -9,7 +9,25 @@ model_list:
       max_input_tokens: 200000
       max_output_tokens: 64000
 
+  - model_name: claude-sonnet
+    litellm_params:
+      model: bedrock/eu.anthropic.claude-sonnet-4-6
+      aws_profile_name: os.environ/AWS_PROFILE
+    model_info:
+      supports_prompt_caching: true
+      max_input_tokens: 200000
+      max_output_tokens: 64000
+
   - model_name: claude-haiku-4.5
+    litellm_params:
+      model: bedrock/eu.anthropic.claude-haiku-4-5-20251001-v1:0
+      aws_profile_name: os.environ/AWS_PROFILE
+    model_info:
+      supports_prompt_caching: true
+      max_input_tokens: 200000
+      max_output_tokens: 16000
+
+  - model_name: claude-haiku
     litellm_params:
       model: bedrock/eu.anthropic.claude-haiku-4-5-20251001-v1:0
       aws_profile_name: os.environ/AWS_PROFILE
@@ -43,9 +61,9 @@ model_list:
       complexity_router_config:
         tiers:
           SIMPLE: qwen3-coder
-          MEDIUM: claude-haiku-4.5
-          COMPLEX: claude-sonnet-4.6
-          REASONING: claude-sonnet-4.6
+          MEDIUM: claude-haiku
+          COMPLEX: claude-sonnet
+          REASONING: claude-sonnet
         default_model: qwen3-coder
         tier_boundaries:
           simple_medium: 0.20

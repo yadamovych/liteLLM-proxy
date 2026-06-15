@@ -11,14 +11,14 @@ OpenAI-compatible proxy for VS Code `litellm-vscode-chat`. Everything runs in **
 ## Quick start
 
 ```bash
-cd ~/litellm-bedrock
+cd ~/liteLLM-proxy
 cp .env.example .env    # first time only
 
 aws sso login --profile YOUR_AWS_PROFILE
 
-chmod +x start.sh stop.sh logs.sh verify-proxy.sh create-key.sh
-./start.sh              # build + start
-./start.sh --debug      # verbose per-request logs
+chmod +x scripts/*.sh
+./scripts/start.sh              # build + start
+./scripts/start.sh --debug      # verbose per-request logs
 ```
 
 | URL | Purpose |
@@ -26,16 +26,16 @@ chmod +x start.sh stop.sh logs.sh verify-proxy.sh create-key.sh
 | http://localhost:4000 | OpenAI-compatible API |
 | http://localhost:4000/ui | Admin UI (virtual keys) |
 
-**VS Code:** use a **virtual key** from `./create-key.sh alice 30` or the UI — not the master key.
+**VS Code:** use a **virtual key** from `./scripts/create-key.sh alice 30` or the UI — not the master key.
 
 ## Commands
 
 ```bash
-./start.sh [--debug]   # up -d --build
-./stop.sh              # down (keeps volumes)
-./logs.sh              # follow proxy logs
-./verify-proxy.sh      # health + chat test
-./create-key.sh dev 30 # new virtual key
+./scripts/start.sh [--debug]   # up -d --build
+./scripts/stop.sh              # down (keeps volumes)
+./scripts/logs.sh              # follow proxy logs
+./scripts/verify-proxy.sh      # health + chat test
+./scripts/create-key.sh dev 30 # new virtual key
 ```
 
 ## AWS credentials
@@ -57,36 +57,49 @@ Master key (`LITELLM_MASTER_KEY`) is for admin/API only.
 
 | Name | Backend |
 |------|---------|
-| `claude-sonnet` | Claude Sonnet 4.6 |
-| `claude-haiku` | Claude Haiku 4.5 |
-| `bedrock-auto` | Auto Haiku/Sonnet routing (VS Code-aware) |
-| `nova-lite`, `qwen3-32b`, `qwen3-coder` | Optional Bedrock models |
+| `bedrock-auto` | VS Code-aware auto routing (recommended) |
+| `claude-sonnet` / `claude-sonnet-4.6` | Claude Sonnet 4.6 |
+| `claude-haiku` / `claude-haiku-4.5` | Claude Haiku 4.5 |
+| `qwen3-coder` | Qwen3 Coder 30B (Bedrock) |
+| `nova-lite` | Amazon Nova Lite (optional) |
 
-`bedrock-auto` strips VS Code XML context before scoring; coding tasks route to Sonnet.
+### `bedrock-auto` routing
+
+Strips VS Code XML context before scoring, then routes by chat mode first:
+
+| Mode / case | Model |
+|-------------|-------|
+| Plan | Sonnet |
+| Ask / Agent | Qwen3 Coder |
+| Simple / coding (non-IDE) | Qwen3 Coder |
+| Medium complexity | Haiku |
+| Complex / reasoning | Sonnet |
 
 ## Features
 
 - **Disk cache** — Docker volume `litellm_cache`
 - **Cost footer** — appended to chat replies (`LITELLM_COST_FOOTER=1`)
-- **Debug logs** — `./start.sh --debug` → `[litellm:debug] model=... tokens=...`
+- **Debug logs** — `./scripts/start.sh --debug` → `[litellm:debug] model=... tokens=...`
 
 ## Layout
 
 ```
-litellm-bedrock/
+liteLLM-proxy/
   Dockerfile
   docker-compose.yml
-  docker/entrypoint.sh      # wait for Postgres, prisma db push, start proxy
   litellm_config.yaml
-  bedrock_auto_router.py    # VS Code-aware bedrock-auto routing
-  debug_summary_callback.py # debug logs + cost footer
-  start.sh stop.sh logs.sh
-  create-key.sh verify-proxy.sh
+  bedrock_auto_router.py    # backward-compat shim (loads src/core/router.py)
+  src/
+    callbacks/              # debug logs + cost footer
+    core/                   # bedrock-auto VS Code-aware router
+  docker/entrypoint.sh
+  scripts/                  # start, stop, logs, verify, create-key
 ```
 
 ## VS Code
 
 1. `Ctrl+Shift+P` → **Manage LiteLLM Provider**
 2. Base URL: `http://localhost:4000`
-3. API Key: virtual key from `./create-key.sh`
-4. **LiteLLM: Test Connection**
+3. API Key: virtual key from `./scripts/create-key.sh`
+4. Model: **`bedrock-auto`** (recommended)
+5. **LiteLLM: Test Connection**

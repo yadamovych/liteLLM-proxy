@@ -1,4 +1,4 @@
-"""Shared utility functions for debug_summary_callback."""
+"""Shared utility functions for LiteLLM proxy callbacks."""
 
 from __future__ import annotations
 
@@ -206,16 +206,23 @@ def normalize_model_name(model: str) -> str:
         model = model.rsplit("/", 1)[-1]
     if model.startswith("eu.anthropic."):
         name = model.removeprefix("eu.anthropic.")
-        if name.startswith("claude-"):
-            return name.split("-202", 1)[0]
-    
+        if name.startswith("claude-haiku"):
+            return "claude-haiku"
+        if name.startswith("claude-sonnet"):
+            return "claude-sonnet"
+
+    lowered = model.lower()
+    if lowered.startswith("claude-haiku"):
+        return "claude-haiku"
+    if lowered.startswith("claude-sonnet"):
+        return "claude-sonnet"
+
     _KNOWN_ALIASES = frozenset(
         {
             "claude-haiku",
             "claude-sonnet",
             "bedrock-auto",
             "nova-lite",
-            "qwen3-32b",
             "qwen3-coder",
         }
     )
@@ -228,7 +235,6 @@ def normalize_model_name(model: str) -> str:
         "qwen": "qwen3-coder",
     }
     
-    lowered = model.lower()
     if lowered in _KNOWN_ALIASES:
         return model
     for substring, alias in _ALIAS_RULES.items():

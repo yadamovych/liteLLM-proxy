@@ -2,7 +2,8 @@
 # Create a LiteLLM virtual key (proxy must be running in Docker).
 # Usage: ./create-key.sh [user-label] [max_budget_usd]
 set -euo pipefail
-cd "$(dirname "$0")"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
 
 if [[ -f .env ]]; then
   # shellcheck disable=SC1091

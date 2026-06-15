@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-cd "$(dirname "$0")"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
 
 DEBUG=0
 if [[ "${1:-}" == "--debug" || "${1:-}" == "-d" ]]; then
@@ -27,7 +28,7 @@ docker compose up -d --build
 echo ""
 echo "Proxy:  http://localhost:4000"
 echo "UI:     http://localhost:4000/ui"
-echo "Logs:   ./logs.sh"
-echo "Verify: ./verify-proxy.sh"
+echo "Logs:   ./scripts/logs.sh"
+echo "Verify: ./scripts/verify-proxy.sh"
 echo ""
 echo "AWS SSO (host): aws sso login --profile YOUR_AWS_PROFILE"

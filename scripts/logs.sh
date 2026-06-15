@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
-cd "$(dirname "$0")"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
 docker compose logs -f litellm

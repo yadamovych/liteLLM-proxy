@@ -1,4 +1,4 @@
-"""Type definitions for structured data in debug_summary_callback."""
+"""Type definitions for LiteLLM proxy callback data."""
 
 from __future__ import annotations
 

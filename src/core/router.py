@@ -14,8 +14,8 @@ from litellm.router_strategy.complexity_router.config import ComplexityTier
 
 from ._vscode_context import ChatMode, detect_chat_mode_from_messages, detect_chat_mode_from_metadata
 
-MODEL_SONNET = "claude-sonnet-4.6"
-MODEL_HAIKU = "claude-haiku-4.5"
+MODEL_SONNET = "claude-sonnet"
+MODEL_HAIKU = "claude-haiku"
 MODEL_QWEN = "qwen3-coder"
 
 _VSCODE_BLOCK_TAGS = (

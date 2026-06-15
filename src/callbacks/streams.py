@@ -1,4 +1,4 @@
-"""Streaming-specific logic for debug_summary_callback."""
+"""Streaming helpers for LiteLLM proxy callbacks."""
 
 from __future__ import annotations
 

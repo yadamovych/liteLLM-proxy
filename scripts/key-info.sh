@@ -3,6 +3,9 @@
 # Usage: ./key-info.sh sk-...
 set -euo pipefail
 
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+
 KEY="${1:-}"
 if [[ -z "${KEY}" ]]; then
   echo "Usage: $0 <virtual-key>" >&2

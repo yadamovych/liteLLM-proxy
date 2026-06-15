@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd "$(dirname "$0")"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
 if [[ -f .env ]]; then
   # shellcheck disable=SC1091
   source .env
@@ -61,12 +62,14 @@ _test_chat() {
 }
 
 _test_chat claude-haiku
+_test_chat claude-sonnet
 _test_chat qwen3-coder
+_test_chat bedrock-auto
 
 if curl -fsS -o /dev/null -w "" "${BASE_URL}/ui" 2>/dev/null; then
   echo "OK: Admin UI reachable at ${BASE_URL}/ui"
 else
-  echo "WARN: Admin UI not reachable (is ./start.sh running?)" >&2
+  echo "WARN: Admin UI not reachable (is ./scripts/start.sh running?)" >&2
 fi
 
 cat <<EOF
@@ -75,9 +78,9 @@ Proxy is ready.
 
 VS Code (litellm-vscode-chat):
   Base URL: ${BASE_URL}
-  API Key:  <virtual key from UI or ./create-key.sh dev>
+  API Key:  <virtual key from UI or ./scripts/create-key.sh dev>
   Admin UI: ${BASE_URL}/ui  (master key for key management only)
 
-Create a dev key:  ./create-key.sh alice 30
+Create a dev key:  ./scripts/create-key.sh alice 30
 Command Palette -> 'Manage LiteLLM Provider' or 'LiteLLM: Test Connection'
 EOF
