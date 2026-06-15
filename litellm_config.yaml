@@ -96,7 +96,7 @@ litellm_settings:
     supported_call_types:
       - completion
       - acompletion
-  callbacks: ["src.callbacks.handler.proxy_handler_instance"]
+  callbacks: ["callbacks.handler.proxy_handler_instance"]
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
