@@ -7,6 +7,7 @@ from typing import TypedDict
 
 class RouteInfo(TypedDict):
     tier: str
+    mode: str | None
     score: float | None
     stripped_chars: int | None
     intent: str | None

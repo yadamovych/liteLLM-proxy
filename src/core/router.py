@@ -1,6 +1,6 @@
 """VS Code-aware complexity router for bedrock-auto.
 
-Strips Copilot context before scoring to ensure fair complexity classification.
+Routes by IDE chat mode first (plan / agent / ask), then complexity scoring.
 """
 
 from __future__ import annotations
@@ -12,6 +12,12 @@ from litellm.router import Router
 from litellm.router_strategy.complexity_router.complexity_router import ComplexityRouter
 from litellm.router_strategy.complexity_router.config import ComplexityTier
 
+from ._vscode_context import ChatMode, detect_chat_mode_from_messages, detect_chat_mode_from_metadata
+
+MODEL_SONNET = "claude-sonnet-4.6"
+MODEL_HAIKU = "claude-haiku-4.5"
+MODEL_QWEN = "qwen3-coder"
+
 _VSCODE_BLOCK_TAGS = (
     "context",
     "editorContext",
@@ -21,6 +27,7 @@ _VSCODE_BLOCK_TAGS = (
     "codeSelection",
     "promptReferences",
     "reminderInstructions",
+    "modeInstructions",
 )
 
 _STRIP_RE = re.compile(
@@ -114,11 +121,6 @@ def _looks_like_coding_request(text: str) -> bool:
 
 
 def _has_vscode_code_context(raw_prompt: str) -> bool:
-    """Non-empty editor selection or fenced code in the user query → needs Sonnet.
-
-    VS Code sends <editorContext> with activeEditor/filePath on every message;
-    that metadata alone must NOT force Sonnet.
-    """
     if not raw_prompt:
         return False
 
@@ -133,16 +135,6 @@ def _has_vscode_code_context(raw_prompt: str) -> bool:
     return False
 
 
-def _needs_capable_model(intent: str, raw_prompt: str) -> bool:
-    return _looks_like_coding_request(intent) or _has_vscode_code_context(raw_prompt)
-
-
-def _upgrade_tier_for_coding(tier: ComplexityTier) -> ComplexityTier:
-    if tier in (ComplexityTier.SIMPLE, ComplexityTier.MEDIUM):
-        return ComplexityTier.COMPLEX
-    return tier
-
-
 def _is_plain_short_intent(text: str) -> bool:
     words = text.split()
     if not words or len(words) > 12 or len(text) > 120:
@@ -150,6 +142,53 @@ def _is_plain_short_intent(text: str) -> bool:
     if _looks_like_coding_request(text):
         return False
     return True
+
+
+def _resolve_chat_mode(
+    messages: list[dict[str, Any]] | None,
+    request_kwargs: dict[str, Any],
+) -> ChatMode | None:
+    for key in ("litellm_metadata", "metadata"):
+        meta = request_kwargs.get(key)
+        if isinstance(meta, dict):
+            mode = detect_chat_mode_from_metadata(meta)
+            if mode:
+                return mode
+    if messages:
+        return detect_chat_mode_from_messages(messages)
+    return None
+
+
+def select_model(
+    *,
+    chat_mode: ChatMode | None,
+    tier: ComplexityTier,
+    intent: str,
+    raw_prompt: str,
+) -> tuple[str, list[str]]:
+    """Pick backend model: mode-first, complexity as fallback."""
+    lowered = intent.lower().strip()
+    is_plain_short = lowered in _SHORT_GREETINGS or _is_plain_short_intent(intent)
+
+    if chat_mode is ChatMode.PLAN:
+        return MODEL_SONNET, ["mode=plan -> sonnet"]
+
+    if chat_mode is ChatMode.ASK:
+        return MODEL_QWEN, ["mode=ask -> qwen3-coder"]
+
+    if chat_mode is ChatMode.AGENT:
+        return MODEL_QWEN, ["mode=agent -> qwen3-coder"]
+
+    # Non-IDE clients: complexity-only routing
+    if is_plain_short:
+        return MODEL_QWEN, ["plain-intent -> qwen3-coder"]
+    if tier in (ComplexityTier.COMPLEX, ComplexityTier.REASONING):
+        return MODEL_SONNET, [f"tier={tier.value} -> sonnet"]
+    if _looks_like_coding_request(intent) or _has_vscode_code_context(raw_prompt):
+        return MODEL_QWEN, ["coding -> qwen3-coder"]
+    if tier is ComplexityTier.MEDIUM:
+        return MODEL_HAIKU, ["tier=MEDIUM -> haiku"]
+    return MODEL_QWEN, [f"tier={tier.value} -> qwen3-coder"]
 
 
 class BedrockAutoRouter(ComplexityRouter):
@@ -176,19 +215,6 @@ class BedrockAutoRouter(ComplexityRouter):
             tier, score, signals = super().classify(intent, None)
             signals = [f"intent={intent[:48]!r}", *signals]
 
-        if not is_plain_short and _needs_capable_model(intent, prompt):
-            upgraded = _upgrade_tier_for_coding(tier)
-            if upgraded != tier:
-                signals = ["coding-route -> COMPLEX", *signals]
-                tier = upgraded
-
-        self._last_classification = {
-            "tier": tier.value,
-            "score": round(score, 3),
-            "stripped_chars": len(intent),
-            "intent": intent[:72],
-            "signals": signals[:4],
-        }
         return tier, score, signals
 
     async def async_pre_routing_hook(
@@ -199,24 +225,65 @@ class BedrockAutoRouter(ComplexityRouter):
         input: Optional[Any] = None,
         specific_deployment: Optional[bool] = False,
     ):
-        response = await super().async_pre_routing_hook(
-            model=model,
-            request_kwargs=request_kwargs,
-            messages=messages,
-            input=input,
-            specific_deployment=specific_deployment,
-        )
-        if response is None or not self._last_classification:
-            return response
+        from litellm.types.router import PreRoutingHookResponse
 
-        route_info = {**self._last_classification, "routed_model": response.model}
+        resolved_messages = self._resolve_messages(messages, request_kwargs)
+        if not resolved_messages:
+            return await super().async_pre_routing_hook(
+                model=model,
+                request_kwargs=request_kwargs,
+                messages=messages,
+                input=input,
+                specific_deployment=specific_deployment,
+            )
+
+        has_original_messages = messages is not None and len(messages) > 0
+        user_message, system_prompt = self._extract_user_message_and_system_prompt(
+            resolved_messages
+        )
+
+        if user_message is None:
+            routed_model = self.config.default_model or MODEL_HAIKU
+            return PreRoutingHookResponse(
+                model=routed_model,
+                messages=messages if has_original_messages else None,
+            )
+
+        chat_mode = _resolve_chat_mode(resolved_messages, request_kwargs)
+        intent = extract_routing_intent(user_message)
+        if not intent:
+            intent = strip_vscode_wrapper(user_message)[:200]
+
+        tier, score, signals = self.classify(user_message, system_prompt)
+        routed_model, route_signals = select_model(
+            chat_mode=chat_mode,
+            tier=tier,
+            intent=intent,
+            raw_prompt=user_message,
+        )
+        all_signals = [*route_signals, *signals[:3]]
+
+        self._last_classification = {
+            "tier": tier.value,
+            "mode": chat_mode.value if chat_mode else None,
+            "score": round(score, 3),
+            "stripped_chars": len(intent),
+            "intent": intent[:72],
+            "signals": all_signals[:5],
+            "routed_model": routed_model,
+        }
+
         for key in ("metadata", "litellm_metadata"):
             meta = request_kwargs.get(key)
             if not isinstance(meta, dict):
                 meta = {}
                 request_kwargs[key] = meta
-            meta["bedrock_auto_route"] = route_info
-        return response
+            meta["bedrock_auto_route"] = dict(self._last_classification)
+
+        return PreRoutingHookResponse(
+            model=routed_model,
+            messages=messages if has_original_messages else None,
+        )
 
 
 def _init_bedrock_auto_router(self: Router, deployment) -> None:

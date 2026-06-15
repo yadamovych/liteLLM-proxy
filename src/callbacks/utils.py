@@ -210,14 +210,22 @@ def normalize_model_name(model: str) -> str:
             return name.split("-202", 1)[0]
     
     _KNOWN_ALIASES = frozenset(
-        {"claude-haiku", "claude-sonnet", "bedrock-auto", "nova-lite", "qwen3-32b", "qwen3-coder"}
+        {
+            "claude-haiku",
+            "claude-sonnet",
+            "bedrock-auto",
+            "nova-lite",
+            "qwen3-32b",
+            "qwen3-coder",
+        }
     )
     _ALIAS_RULES = {
         "haiku": "claude-haiku",
         "sonnet": "claude-sonnet",
         "nova": "nova-lite",
+        "30b-a3b": "qwen3-coder",
         "coder": "qwen3-coder",
-        "qwen": "qwen3-32b",
+        "qwen": "qwen3-coder",
     }
     
     lowered = model.lower()

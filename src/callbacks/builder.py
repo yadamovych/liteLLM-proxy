@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .types import RequestSummary, RouteInfo, UsageStats
+from .types import ModelInfo, RequestSummary, RouteInfo, UsageStats
 from .utils import extract_request_summary, normalize_model_name, truncate
 
 
@@ -34,10 +34,11 @@ class DebugLogBuilder:
             return None
         return RouteInfo(
             tier=route.get("tier", ""),
+            mode=route.get("mode"),
             score=route.get("score"),
             stripped_chars=route.get("stripped_chars"),
             intent=route.get("intent"),
-            signals=None,
+            signals=route.get("signals"),
         )
 
     def build_debug_log_entry(
@@ -60,6 +61,8 @@ class DebugLogBuilder:
             log_parts["via"] = model_info["via"]
         
         if route_info:
+            if route_info["mode"]:
+                log_parts["mode"] = route_info["mode"]
             if route_info["tier"]:
                 log_parts["route"] = route_info["tier"]
             if route_info["score"] is not None:
@@ -95,7 +98,11 @@ class DebugLogBuilder:
 
         if via == actual:
             via = None
-        if via == "bedrock-auto" and actual in {"claude-haiku", "claude-sonnet"}:
+        if via == "bedrock-auto" and actual in {
+            "claude-haiku",
+            "claude-sonnet",
+            "qwen3-coder",
+        }:
             return ModelInfo(actual=actual, via=via)
         if via and actual == "unknown":
             return ModelInfo(actual=via)
