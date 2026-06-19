@@ -70,6 +70,8 @@ model_list:
 
 router_settings:
   routing_strategy: simple-shuffle
+  optional_pre_call_checks:
+    - prompt_caching
 
 litellm_settings:
   set_verbose: false

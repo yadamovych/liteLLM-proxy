@@ -76,6 +76,7 @@ Extracts your words from VS Code XML wrappers, then routes by **keyword rules on
 ## Features
 
 - **Disk cache** — Docker volume `litellm_cache`
+- **Bedrock prompt cache** — auto `cache_control` on Claude calls (VS Code envelope + system); `LITELLM_PROMPT_CACHE=1`
 - **Cost footer** — appended to chat replies (`LITELLM_COST_FOOTER=1`)
 - **Debug logs** — `./scripts/start.sh --debug` → `[litellm:debug] model=... tokens=...`
 

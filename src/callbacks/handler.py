@@ -11,6 +11,7 @@ from litellm.integrations.custom_logger import CustomLogger
 from litellm.types.utils import Delta, ModelResponseStream, StreamingChoices
 
 from .builder import DebugLogBuilder
+from .prompt_cache import inject_prompt_cache
 from .cost import compute_cost_usd, format_cost, format_token_count, build_cost_footer
 from .routes import extract_route_metadata, extract_cache_stats
 from .streams import (
@@ -156,6 +157,13 @@ class DebugSummaryHandler(CustomLogger):
         end_time: float,
     ) -> None:
         self.log_failure_event(kwargs, response_obj, start_time, end_time)
+
+    async def async_pre_call_deployment_hook(
+        self,
+        kwargs: dict,
+        call_type: Any,
+    ) -> dict | None:
+        return inject_prompt_cache(kwargs)
 
     async def async_post_call_success_hook(
         self,

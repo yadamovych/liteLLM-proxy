@@ -33,6 +33,7 @@ services:
       LITELLM_LOG: ${LITELLM_LOG:-WARNING}
       LITELLM_DEBUG: ${LITELLM_DEBUG:-}
       LITELLM_COST_FOOTER: ${LITELLM_COST_FOOTER:-1}
+      LITELLM_PROMPT_CACHE: ${LITELLM_PROMPT_CACHE:-1}
     volumes:
       - ${AWS_CONFIG_DIR:-${HOME}/.aws}:/root/.aws:ro
       - litellm_cache:/app/.litellm_cache
