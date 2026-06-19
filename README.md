@@ -57,7 +57,7 @@ Master key (`LITELLM_MASTER_KEY`) is for admin/API only.
 
 | Name | Backend |
 |------|---------|
-| `bedrock-auto` | VS Code-aware auto routing (recommended) |
+| `bedrock-auto` | Keyword complexity auto routing (recommended) |
 | `claude-sonnet` / `claude-sonnet-4.6` | Claude Sonnet 4.6 |
 | `claude-haiku` / `claude-haiku-4.5` | Claude Haiku 4.5 |
 | `qwen3-coder` | Qwen3 Coder 30B (Bedrock) |
@@ -65,15 +65,13 @@ Master key (`LITELLM_MASTER_KEY`) is for admin/API only.
 
 ### `bedrock-auto` routing
 
-Strips VS Code XML context before scoring, then routes by chat mode first:
+Extracts your words from VS Code XML wrappers, then routes by **keyword rules only** (no Ask/Plan/Agent mode routing):
 
-| Mode / case | Model |
-|-------------|-------|
-| Plan | Sonnet |
-| Ask / Agent | Qwen3 Coder |
-| Simple / coding (non-IDE) | Qwen3 Coder |
-| Medium complexity | Haiku |
-| Complex / reasoning | Sonnet |
+| Tier | Model | Examples |
+|------|-------|----------|
+| Simple | Qwen3 Coder | `hi`, `test`, `hello world`, short factual questions |
+| Medium | Haiku | `refactor`, `explain why`, tradeoffs, coding tasks |
+| Complex | Sonnet | `design a…`, architecture, multi-region failover |
 
 ## Features
 
@@ -90,7 +88,7 @@ liteLLM-proxy/
   litellm_config.yaml
   src/
     callbacks/              # debug logs + cost footer
-    core/                   # bedrock-auto VS Code-aware router
+    core/                   # bedrock-auto keyword complexity router
   docker/entrypoint.sh
   scripts/                  # start, stop, logs, verify, create-key
 ```

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import core.router  # noqa: F401 — bedrock-auto VS Code-aware routing patch
+import core.router  # noqa: F401 — bedrock-auto complexity routing patch
 
 import time
 from typing import Any

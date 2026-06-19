@@ -13,6 +13,10 @@ _MODE_RE = re.compile(
     r'(?:running in|currently in|switched to)\s+["\']?(?P<mode>plan|agent|ask)["\']?\s+mode',
     re.IGNORECASE,
 )
+_MODE_INSTRUCTIONS_RE = re.compile(
+    r"<modeInstructions>\s*(.*?)\s*</modeInstructions>",
+    re.DOTALL | re.IGNORECASE,
+)
 _PLANNING_HINT_RE = re.compile(
     r"\bplanning mode\b|\bgenerate an implementation plan\b|\bdo not make (?:any )?code edits\b",
     re.IGNORECASE,
@@ -84,7 +88,32 @@ def detect_chat_mode(text: str) -> ChatMode | None:
     return None
 
 
+def detect_chat_mode_from_raw_prompt(text: str) -> ChatMode | None:
+    """Detect IDE chat mode from the current user envelope (modeInstructions first)."""
+    if not text:
+        return None
+
+    tagged = _MODE_INSTRUCTIONS_RE.search(text)
+    if tagged:
+        mode = detect_chat_mode(tagged.group(1))
+        if mode:
+            return mode
+
+    return detect_chat_mode(text)
+
+
 def detect_chat_mode_from_messages(messages: list[dict[str, Any]]) -> ChatMode | None:
+    # Prefer the latest user turn — active mode lives in the current request envelope.
+    for msg in reversed(messages):
+        if not isinstance(msg, dict) or msg.get("role") != "user":
+            continue
+        text = _message_text(msg.get("content"))
+        if not text:
+            continue
+        mode = detect_chat_mode_from_raw_prompt(text)
+        if mode:
+            return mode
+
     parts: list[str] = []
     for msg in messages:
         if not isinstance(msg, dict):

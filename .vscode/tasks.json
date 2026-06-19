@@ -53,6 +53,19 @@
       "presentation": {
         "close": true
       }
+    },
+    {
+      "label": "Restart LiteLLM Bedrock Proxy (debug)",
+      "type": "shell",
+      "command": "./scripts/stop.sh && ./scripts/start.sh --debug",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
     }
   ]
 }

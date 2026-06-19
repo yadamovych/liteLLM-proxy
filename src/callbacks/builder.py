@@ -36,7 +36,7 @@ class DebugLogBuilder:
             tier=route.get("tier", ""),
             mode=route.get("mode"),
             score=route.get("score"),
-            stripped_chars=route.get("stripped_chars"),
+            stripped_chars=route.get("intent_chars", route.get("stripped_chars")),
             intent=route.get("intent"),
             signals=route.get("signals"),
         )
@@ -65,8 +65,6 @@ class DebugLogBuilder:
                 log_parts["mode"] = route_info["mode"]
             if route_info["tier"]:
                 log_parts["route"] = route_info["tier"]
-            if route_info["score"] is not None:
-                log_parts["route_score"] = route_info["score"]
             if route_info["stripped_chars"] is not None:
                 log_parts["intent_chars"] = route_info["stripped_chars"]
             if route_info["intent"]:
