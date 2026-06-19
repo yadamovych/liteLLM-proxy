@@ -4,7 +4,7 @@
     {
       "label": "Start LiteLLM Bedrock Proxy",
       "type": "shell",
-      "command": "./start-proxy.sh",
+      "command": "./scripts/start.sh",
       "options": {
         "cwd": "${workspaceFolder}"
       },
@@ -18,7 +18,7 @@
     {
       "label": "Start LiteLLM Bedrock Proxy (debug)",
       "type": "shell",
-      "command": "./start-proxy.sh --debug",
+      "command": "./scripts/start.sh --debug",
       "options": {
         "cwd": "${workspaceFolder}"
       },
@@ -26,17 +26,33 @@
       "problemMatcher": [],
       "presentation": {
         "reveal": "always",
-        "panel": "dedicated"
+        "panel": "dedicated",
+        "close": true
+      }
+    },
+    {
+      "label": "Stop LiteLLM Bedrock Proxy",
+      "type": "shell",
+      "command": "./scripts/stop.sh",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "close": true
       }
     },
     {
       "label": "Verify LiteLLM Proxy",
       "type": "shell",
-      "command": "./verify-proxy.sh",
+      "command": "./scripts/verify-proxy.sh",
       "options": {
         "cwd": "${workspaceFolder}"
       },
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "close": true
+      }
     }
   ]
 }

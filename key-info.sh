@@ -1,1 +1,0 @@
-scripts/key-info.sh

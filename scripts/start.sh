@@ -28,7 +28,9 @@ docker compose up -d --build
 echo ""
 echo "Proxy:  http://localhost:4000"
 echo "UI:     http://localhost:4000/ui"
-echo "Logs:   ./scripts/logs.sh"
 echo "Verify: ./scripts/verify-proxy.sh"
 echo ""
 echo "AWS SSO (host): aws sso login --profile YOUR_AWS_PROFILE"
+echo ""
+echo "Tailing proxy logs (Ctrl+C to stop following; containers keep running) ..."
+exec docker compose logs -f litellm
