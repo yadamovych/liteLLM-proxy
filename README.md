@@ -88,7 +88,6 @@ liteLLM-proxy/
   Dockerfile
   docker-compose.yml
   litellm_config.yaml
-  bedrock_auto_router.py    # backward-compat shim (loads src/core/router.py)
   src/
     callbacks/              # debug logs + cost footer
     core/                   # bedrock-auto VS Code-aware router
