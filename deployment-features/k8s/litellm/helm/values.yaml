@@ -1,0 +1,42 @@
+# Base Helm values for the LiteLLM K8s feature.
+# Terraform renders deployment-specific overrides via terraform/module/values.yaml.tpl.
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/your-org/litellm-proxy
+  tag: latest
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+
+db:
+  useExisting: true
+  deployStandalone: false
+
+migrationJob:
+  enabled: true
+
+redis:
+  enabled: false
+
+logLevel: WARNING
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: "2"
+    memory: 2Gi
+
+livenessProbe:
+  path: /health/liveliness
+
+readinessProbe:
+  path: /health/readiness
+
+startupProbe:
+  path: /health/readiness
+  failureThreshold: 30
