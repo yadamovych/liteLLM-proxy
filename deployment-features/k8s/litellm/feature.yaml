@@ -1,0 +1,23 @@
+name: litellm
+kind: k8s
+description: LiteLLM proxy for OpenAI-compatible Bedrock routing (bedrock-auto, prompt cache, cost footer)
+version: 0.1.0
+
+dependencies:
+  - postgres
+  - ingress-nginx
+  - cert-manager
+
+terraform:
+  module: terraform/module
+  env_template: terraform/env-template/litellm.tf
+
+helm:
+  chart: litellm-helm
+  repository: https://berriai.github.io/litellm-helm
+  values: helm/values.yaml
+
+defaults:
+  namespace: litellm
+  port: 4000
+  health_path: /health/liveliness
